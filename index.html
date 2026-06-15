@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>40 before 40</title>
+<style>
+  :root{
+    --bg:#f6f5f1; --card:#ffffff; --ink:#232a24; --muted:#6b716a;
+    --border:#e4e3db; --accent:#2f6b4f; --accent-soft:#e7f0eb; --gold:#b9842a;
+    --strike:#a9aea4; --danger:#b4453c;
+    --radius:12px; --shadow:0 1px 2px rgba(20,30,22,.05),0 4px 16px rgba(20,30,22,.04);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#151915; --card:#1c211d; --ink:#e8ebe4; --muted:#9aa097;
+      --border:#2c322c; --accent:#5fae87; --accent-soft:#22302a; --gold:#d6a14e;
+      --strike:#5d635b; --danger:#e08079;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;padding:20px}
+  .wrap{max-width:720px;margin:0 auto}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin:0 0 4px}
+  h1{font-size:26px;margin:0 0 14px;font-weight:650;letter-spacing:-.01em}
+  .back{font:inherit;font-size:13px;font-weight:600;color:var(--accent);background:none;border:none;
+    cursor:pointer;padding:4px 0;margin:0 0 6px;display:inline-flex;align-items:center;gap:6px}
+  .back:hover{text-decoration:underline}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .prog{padding:18px 20px;margin-bottom:18px}
+  .prog .row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .count{font-size:30px;font-weight:700;letter-spacing:-.02em}
+  .count small{font-size:16px;font-weight:500;color:var(--muted)}
+  .pct{font-size:13px;color:var(--muted)}
+  .bar{height:9px;background:var(--accent-soft);border-radius:99px;overflow:hidden}
+  .bar > span{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .45s cubic-bezier(.2,.7,.2,1)}
+  input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:8px}
+  /* master list */
+  ul.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+  .item{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--border);
+    border-radius:10px;padding:11px 13px}
+  .tick{flex:none;width:22px;height:22px;border-radius:50%;border:1.6px solid var(--border);background:transparent;
+    cursor:pointer;display:grid;place-items:center;color:#fff;font-size:13px;margin-top:1px;transition:background .12s,border-color .12s}
+  .tick.computed{cursor:default}
+  .item.done .tick{background:var(--accent);border-color:var(--accent)}
+  .num{flex:none;width:20px;text-align:right;color:var(--muted);font-size:12.5px;margin-top:3px;font-variant-numeric:tabular-nums}
+  .body{flex:1;min-width:0}
+  .title{font-size:15px}
+  .item.done .title{color:var(--strike);text-decoration:line-through}
+  .note{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .open{flex:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);
+    border:1px solid var(--accent);border-radius:8px;padding:6px 11px;cursor:pointer;margin-top:1px;white-space:nowrap}
+  .open:hover{filter:brightness(.97)}
+  .open .mini{display:block;font-weight:500;color:var(--muted);font-size:11px}
+  /* sub views */
+  .add{display:flex;gap:8px;margin-bottom:8px}
+  input[type=text],input[type=date]{font:inherit;color:var(--ink);background:var(--card);
+    border:1px solid var(--border);border-radius:9px;padding:10px 12px}
+  input[type=text]{flex:1;min-width:0}
+  input[type=date]{color:var(--muted)}
+  .btn{font:inherit;font-weight:600;cursor:pointer;border-radius:9px;border:1px solid var(--accent);
+    background:var(--accent);color:#fff;padding:10px 16px}
+  .btn:hover{filter:brightness(1.06)}
+  .hint{font-size:12.5px;color:var(--muted);margin:2px 2px 16px}
+  .sec-label{display:flex;align-items:center;gap:10px;margin:22px 2px 10px;font-size:13px;
+    font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .sec-label .ln{flex:1;height:1px;background:var(--border)}
+  .sec-label .restore{font:inherit;text-transform:none;letter-spacing:0;font-weight:500;font-size:12px;
+    color:var(--accent);background:none;border:none;cursor:pointer;text-decoration:underline}
+  ul.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .log li{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--border);
+    border-radius:10px;padding:11px 12px}
+  .log .tk{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;
+    display:grid;place-items:center;font-size:13px;margin-top:1px}
+  .log .txt{flex:1;min-width:0}
+  .log .date{font-size:12px;color:var(--muted);margin-top:1px}
+  .del{flex:none;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;
+    line-height:1;padding:2px 6px;border-radius:6px}
+  .del:hover{color:var(--danger);background:var(--accent-soft)}
+  .empty{color:var(--muted);font-size:14px;padding:14px 4px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-flex;align-items:center;gap:2px;font-size:13.5px;border:1px solid var(--border);
+    background:var(--card);border-radius:99px;overflow:hidden}
+  .chip .lab{font:inherit;font-size:13.5px;color:var(--ink);background:none;border:none;cursor:pointer;
+    padding:7px 4px 7px 13px;text-align:left}
+  .chip:hover{border-color:var(--accent)}
+  .chip .lab:hover{color:var(--accent)}
+  .chip .x{font:inherit;border:none;background:none;color:var(--muted);cursor:pointer;font-size:15px;
+    line-height:1;padding:7px 11px 7px 6px}
+  .chip .x:hover{color:var(--danger)}
+  /* champ grid */
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+  #search{flex:1;min-width:160px}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+  .seg button{font:inherit;font-size:13px;border:none;background:var(--card);color:var(--muted);padding:9px 13px;cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--accent);color:#fff;font-weight:600}
+  .surprise{font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--accent);
+    background:transparent;color:var(--accent);border-radius:9px;padding:9px 14px}
+  .surprise:hover{background:var(--accent-soft)}
+  .banner{display:none;align-items:center;gap:10px;background:var(--accent-soft);border:1px solid var(--accent);
+    border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:14px}
+  .banner.show{display:flex}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+  .champ{font:inherit;font-size:13.5px;text-align:left;cursor:pointer;border:1px solid var(--border);
+    background:var(--card);color:var(--ink);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:8px}
+  .champ:hover{border-color:var(--accent)}
+  .champ .dot{flex:none;width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border);
+    display:grid;place-items:center;font-size:11px;color:#fff}
+  .champ[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent)}
+  .champ[aria-pressed=true] .dot{background:var(--accent);border-color:var(--accent)}
+  .champ[aria-pressed=true] .nm{color:var(--accent);font-weight:600}
+  .champ .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .new{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--gold);border:1px solid var(--gold);
+    border-radius:4px;padding:0 4px;line-height:1.5;flex:none}
+  .none{grid-column:1/-1;color:var(--muted);font-size:14px;padding:14px 4px}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:22px;gap:12px;flex-wrap:wrap}
+  .reset{font:inherit;font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline}
+  .reset:hover{color:var(--danger)}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);
+    color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;
+    transition:opacity .2s,transform .2s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hidden{display:none}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HOME -->
+  <section id="view-home">
+    <p class="eyebrow">turning 40 &middot; feb 5, 2027</p>
+    <h1>40 before 40</h1>
+    <div class="card prog">
+      <div class="row">
+        <div class="count" id="hCount">0 <small>of 40 done</small></div>
+        <div class="pct" id="hPct">0%</div>
+      </div>
+      <div class="bar"><span id="hBar"></span></div>
+    </div>
+    <ul class="items" id="items"></ul>
+    <div class="foot">
+      <span class="hint" style="margin:0">Everything saves automatically &middot; #18 and #20 update from their trackers.</span>
+    </div>
+  </section>
+
+  <!-- ACTS OF SERVICE -->
+  <section id="view-acts" class="hidden">
+    <button class="back" data-go="home">&larr; All 40</button>
+    <p class="eyebrow">goal 20</p>
+    <h1>40 random acts of service</h1>
+    <div class="card prog">
+      <div class="row">
+        <div class="count" id="aCount">0 <small>of 40 done</small></div>
+        <div class="pct" id="aPct">0%</div>
+      </div>
+      <div class="bar"><span id="aBar"></span></div>
+    </div>
+    <div class="add">
+      <input type="text" id="actText" placeholder="What did you do? (or tap an idea)" autocomplete="off">
+      <input type="date" id="actDate" aria-label="Date">
+      <button class="btn" id="addBtn">Log it</button>
+    </div>
+    <p class="hint">Each logged act counts toward 40. Tap an idea to drop it in the box; tap its &times; to hide ones that don't fit around here.</p>
+    <div class="sec-label"><span>Logged</span><span class="ln"></span></div>
+    <ul class="log" id="log"></ul>
+    <div class="sec-label"><span>Ideas</span><span class="ln"></span><button class="restore hidden" id="restoreBtn"></button></div>
+    <div class="chips" id="chips"></div>
+    <div class="foot">
+      <span class="hint" style="margin:0">Saved automatically.</span>
+      <button class="reset" id="actReset">Clear logged</button>
+    </div>
+  </section>
+
+  <!-- CHAMPIONS -->
+  <section id="view-champs" class="hidden">
+    <button class="back" data-go="home">&larr; All 40</button>
+    <p class="eyebrow">goal 18</p>
+    <h1>Try every champion once</h1>
+    <div class="card prog">
+      <div class="row">
+        <div class="count" id="cCount">0 <small>of 173 tried</small></div>
+        <div class="pct" id="cPct">0%</div>
+      </div>
+      <div class="bar"><span id="cBar"></span></div>
+    </div>
+    <div class="banner" id="banner"></div>
+    <div class="controls">
+      <input type="text" id="search" placeholder="Search champions…" autocomplete="off">
+      <div class="seg" role="group" aria-label="Filter">
+        <button id="fAll" aria-pressed="true">All</button>
+        <button id="fTried" aria-pressed="false">Tried</button>
+        <button id="fLeft" aria-pressed="false">To do</button>
+      </div>
+      <button class="surprise" id="surprise">Pick my next</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="foot">
+      <span class="hint" style="margin:0"><span class="new" style="vertical-align:middle">NEW</span> marks 2025–26 additions.</span>
+      <button class="reset" id="champReset">Clear all</button>
+    </div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1700);}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+const sg=async(k,v)=>{if(!window.storage)return;try{await window.storage.set(k,JSON.stringify(v));}catch(e){toast("Couldn't save");console.error(e);}};
+const gg=async(k,fb)=>{if(!window.storage)return fb;try{const r=await window.storage.get(k);return r&&r.value?JSON.parse(r.value):fb;}catch(e){return fb;}};
+
+/* ---------- master list ---------- */
+const DEFAULT_DONE=[1,2,6,7,14,15,19,22,23,26,30,31,37];
+const ITEMS=[
+ [1,"Complete a Hyrox event","Vancouver, December"],
+ [2,"Run a half marathon","BMO Vancouver"],
+ [3,"Visit every Tri-Cities brewery","ongoing crawl"],
+ [4,"Read the Sandman series","3 volumes in"],
+ [5,"Visit Australia","aiming Dec–Jan, home for the big day"],
+ [6,"Visit South America",""],
+ [7,"Visit Scandinavia / Norden",""],
+ [8,"Plan a 40th birthday party","lock in before you travel"],
+ [9,"Host regular dinner parties","monthly-ish this year"],
+ [10,"Bike-camp three different islands","1 of 3 — Salt Spring done"],
+ [11,"Become a father","in the works"],
+ [12,"Learn guitar","plan set"],
+ [13,"Give a pro presentation in French",""],
+ [14,"Write up the Tula / Hakai impact",""],
+ [15,"Take an overnight kayak trip","Sunshine Coast"],
+ [16,"Make custom jewelry from family pieces","have a plan in mind"],
+ [17,"Do 50 crosswords or sudoku","25 of 50"],
+ [18,"Try every LoL champion once","",{link:"champs"}],
+ [19,"Laser tag night with friends",""],
+ [20,"Do 40 random acts of service","",{link:"acts"}],
+ [21,"Paddleboard Buntzen Lake and back","near home — easy summer win"],
+ [22,"Hike the West Coast Trail","with Luba"],
+ [23,"Grouse Grind 3× in one day",""],
+ [24,"Try cross-country skiing","December, before NZ/Australia"],
+ [25,"Stand up using only one leg",""],
+ [26,"Bike the Triple Crown",""],
+ [27,"Hike Panorama Ridge","book the Sept window · Rubble Creek"],
+ [28,"Hike Black Tusk","same trip as Panorama"],
+ [29,"Camp under a meteor shower","Aug 12–13 with your nieces"],
+ [30,"Do 10 unassisted pull-ups",""],
+ [31,"Nap as needed & make time for self-care","keep it up"],
+ [32,"Windsurf somewhere new","Squamish — this weekend!"],
+ [33,"Try rock climbing","gym first, then outdoors"],
+ [34,"Hike part of Te Araroa with Luba","planned Jan–Feb"],
+ [35,"Cook your restaurant favourites","tofu lettuce wraps · seitan wings"],
+ [36,"Keep being your authentic self","the north star"],
+ [37,"Hit the driving range",""],
+ [38,"Skinny dip somewhere iconic","somewhere worth the story"],
+ [39,"Have a 'yes' day with Aaron","pick a date together"],
+ [40,"Send 10 heartfelt notes","notes or a best-of-30s photobook"]
+];
+let manualDone=new Set();
+
+function allDone(){
+  const s=new Set(manualDone);
+  if(acts.length>=40)s.add(20);
+  if(tried.size>=173)s.add(18);
+  return s;
+}
+function updateMaster(){
+  const s=allDone(),n=s.size;
+  $("hCount").innerHTML=`${n} <small>of 40 done</small>`;
+  $("hPct").textContent=n>=40?"all 40 \u2713":`${Math.round(n/40*100)}%`;
+  $("hBar").style.width=(n/40*100)+"%";
+}
+function renderItems(){
+  const done=allDone(),ul=$("items");ul.innerHTML="";
+  ITEMS.forEach(([id,title,note,opt])=>{
+    const isDone=done.has(id),link=opt&&opt.link;
+    const li=document.createElement("li");
+    li.className="item"+(isDone?" done":"");
+    let liveNote=note;
+    if(link==="acts")liveNote=`${acts.length} of 40 logged`;
+    if(link==="champs")liveNote=`${tried.size} of 173 tried`;
+    li.innerHTML=`
+      <button class="tick${link?" computed":""}" ${link?'tabindex="-1" aria-hidden="true"':'aria-label="Toggle done"'}>${isDone?"\u2713":""}</button>
+      <span class="num">${id}</span>
+      <div class="body"><div class="title">${esc(title)}</div>${liveNote?`<div class="note">${esc(liveNote)}</div>`:""}</div>
+      ${link?`<button class="open" data-go="${link}">Open<span class="mini">tracker</span></button>`:""}`;
+    if(!link)li.querySelector(".tick").onclick=()=>toggleItem(id);
+    ul.appendChild(li);
+  });
+  ul.querySelectorAll(".open").forEach(b=>b.onclick=()=>show(b.dataset.go));
+}
+async function toggleItem(id){
+  if(manualDone.has(id))manualDone.delete(id);else manualDone.add(id);
+  renderItems();updateMaster();await sg("fbf:done",[...manualDone]);
+}
+
+/* ---------- acts of service ---------- */
+const SUGGESTIONS=[
+ "Shovel or sweep a neighbour's walkway","Leave a big tip and a kind note for a server",
+ "Pay for the coffee of the person behind you","Donate blood at Canadian Blood Services",
+ "Volunteer a shift at SHARE food bank","Write a thank-you to a past teacher or mentor",
+ "Cook a meal for a friend having a hard week","Pack out litter from a trail or Buntzen Lake",
+ "Donate gently-used gear to a community org","Carry groceries for an elderly neighbour",
+ "Walk a lost visitor to where they're headed","Stock a Little Free Library with good books",
+ "Walk dogs at a local animal shelter","Bring coffee to a transit or construction crew",
+ "Mentor someone early-career for an hour","Pay a stranger's parking meter",
+ "Round up stray shopping carts in the lot","Genuinely compliment three strangers",
+ "Donate to a friend's cause in their name","Carry a stroller up the SkyTrain stairs",
+ "Leave a glowing review for a small local shop","Drop off supplies at an animal rescue",
+ "Bake something for new neighbours","Help someone move without being asked twice",
+ "Clear a clogged storm drain on your street","Donate winter coats before the cold hits",
+ "Tip a busker well and stay to listen","Fix or assemble something for a friend",
+ "Send a care package to someone far away","Join a park clean-up or trail-build day",
+ "Tape some change to a vending machine","Help someone load groceries into their car",
+ "Offer to take a photo for tourists at a viewpoint","Leave non-perishables in a Little Free Pantry",
+ "Write a thank-you note to a bus driver","Clear a snowy bus stop or curb cut",
+ "Leave a spare umbrella at a transit stop","Leave a kind comment on a small creator's work",
+ "Give up your seat on the bus or SkyTrain","Drop old towels and blankets at the SPCA",
+ "Buy a meal or gift card for someone sleeping rough","Donate books to a local school or library",
+ "Help a neighbour build flat-pack furniture","Bring treats to your local fire hall",
+ "Plant pollinator flowers in a shared space","Babysit so a tired parent can rest",
+ "Slip a generous tip into a tip jar anonymously","Return a misdelivered parcel by hand",
+ "Sign up to give plasma regularly","Tutor a neighbourhood kid for an hour",
+ "Donate sports gear to a youth program","Hold the door and help with heavy loads",
+ "Freeze a double batch of meals for a new parent","Pick up trail litter that isn't yours",
+ "Send flowers to someone for no reason","Volunteer at a community garden work party",
+ "Offer your driveway or spare room in a pinch","Leave water out for trail dogs on a hot day",
+ "Volunteer at a winter warming shelter","Teach a skill you have to someone who wants it"
+];
+let acts=[],hidden=new Set();
+
+function fmt(d){try{return new Date(d+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});}catch(e){return d;}}
+function updateActs(){
+  const n=acts.length;
+  $("aCount").innerHTML=`${n} <small>of 40 done</small>`;
+  $("aPct").textContent=n>=40?"complete \u2713":`${Math.round(n/40*100)}%`;
+  $("aBar").style.width=Math.min(100,n/40*100)+"%";
+}
+function renderLog(){
+  const log=$("log");
+  if(!acts.length){log.innerHTML='<li class="empty">Nothing logged yet — your first good deed is one tap away.</li>';return;}
+  log.innerHTML="";
+  [...acts].reverse().forEach(a=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<span class="tk">\u2713</span><div class="txt">${esc(a.text)}<div class="date">${fmt(a.date)}</div></div><button class="del" aria-label="Remove">\u00d7</button>`;
+    li.querySelector(".del").onclick=()=>removeAct(a.id);
+    log.appendChild(li);
+  });
+}
+function renderChips(){
+  const c=$("chips");c.innerHTML="";
+  SUGGESTIONS.filter(s=>!hidden.has(s)).forEach(s=>{
+    const chip=document.createElement("div");chip.className="chip";
+    chip.innerHTML=`<button class="lab">${esc(s)}</button><button class="x" aria-label="Hide this idea">\u00d7</button>`;
+    chip.querySelector(".lab").onclick=()=>{$("actText").value=s;$("actText").focus();};
+    chip.querySelector(".x").onclick=()=>hideSug(s);
+    c.appendChild(chip);
+  });
+  const rb=$("restoreBtn"),h=hidden.size;
+  if(h){rb.classList.remove("hidden");rb.textContent=`restore ${h} hidden`;}else rb.classList.add("hidden");
+}
+async function hideSug(s){hidden.add(s);renderChips();await sg("fbf:acts-hidden",[...hidden]);}
+async function restoreSug(){hidden=new Set();renderChips();await sg("fbf:acts-hidden",[]);toast("Ideas restored.");}
+async function addAct(){
+  const t=$("actText").value.trim();if(!t){$("actText").focus();return;}
+  const d=$("actDate").value||new Date().toISOString().slice(0,10);
+  acts.push({id:Date.now()+""+Math.random().toString(36).slice(2,6),text:t,date:d});
+  $("actText").value="";renderLog();updateActs();updateMaster();renderItems();await sg("fbf:acts",acts);
+  toast(acts.length>=40?"That's 40 — incredible \u2713":"Logged. Nice one.");
+}
+async function removeAct(id){acts=acts.filter(a=>a.id!==id);renderLog();updateActs();updateMaster();renderItems();await sg("fbf:acts",acts);}
+async function resetActs(){if(!confirm("Clear all logged acts? This can't be undone."))return;acts=[];renderLog();updateActs();updateMaster();renderItems();await sg("fbf:acts",acts);toast("Cleared.");}
+
+/* ---------- champions ---------- */
+const NEWC=new Set(["Smolder","Aurora","Ambessa","Mel","Yunara","Zaahen","Locke"]);
+const CHAMPS=["Aatrox","Ahri","Akali","Akshan","Alistar","Ambessa","Amumu","Anivia","Annie","Aphelios","Ashe","Aurelion Sol","Aurora","Azir","Bard","Bel'Veth","Blitzcrank","Brand","Braum","Briar","Caitlyn","Camille","Cassiopeia","Cho'Gath","Corki","Darius","Diana","Dr. Mundo","Draven","Ekko","Elise","Evelynn","Ezreal","Fiddlesticks","Fiora","Fizz","Galio","Gangplank","Garen","Gnar","Gragas","Graves","Gwen","Hecarim","Heimerdinger","Hwei","Illaoi","Irelia","Ivern","Janna","Jarvan IV","Jax","Jayce","Jhin","Jinx","K'Sante","Kai'Sa","Kalista","Karma","Karthus","Kassadin","Katarina","Kayle","Kayn","Kennen","Kha'Zix","Kindred","Kled","Kog'Maw","LeBlanc","Lee Sin","Leona","Lillia","Lissandra","Locke","Lucian","Lulu","Lux","Malphite","Malzahar","Maokai","Master Yi","Mel","Milio","Miss Fortune","Mordekaiser","Morgana","Naafiri","Nami","Nasus","Nautilus","Neeko","Nidalee","Nilah","Nocturne","Nunu & Willump","Olaf","Orianna","Ornn","Pantheon","Poppy","Pyke","Qiyana","Quinn","Rakan","Rammus","Rek'Sai","Rell","Renata Glasc","Renekton","Rengar","Riven","Rumble","Ryze","Samira","Sejuani","Senna","Seraphine","Sett","Shaco","Shen","Shyvana","Singed","Sion","Sivir","Skarner","Smolder","Sona","Soraka","Swain","Sylas","Syndra","Tahm Kench","Taliyah","Talon","Taric","Teemo","Thresh","Tristana","Trundle","Tryndamere","Twisted Fate","Twitch","Udyr","Urgot","Varus","Vayne","Veigar","Vel'Koz","Vex","Vi","Viego","Viktor","Vladimir","Volibear","Warwick","Wukong","Xayah","Xerath","Xin Zhao","Yasuo","Yone","Yorick","Yunara","Yuumi","Zac","Zaahen","Zed","Zeri","Ziggs","Zilean","Zoe","Zyra"];
+const CT=CHAMPS.length;
+let tried=new Set(),cfilter="all";
+function updateChamps(){
+  const n=tried.size;
+  $("cCount").innerHTML=`${n} <small>of ${CT} tried</small>`;
+  $("cPct").textContent=n>=CT?"all done \u2713":`${Math.round(n/CT*100)}%`;
+  $("cBar").style.width=(n/CT*100)+"%";
+}
+function renderGrid(){
+  const q=$("search").value.trim().toLowerCase(),grid=$("grid");grid.innerHTML="";let shown=0;
+  CHAMPS.forEach(name=>{
+    const on=tried.has(name);
+    if(cfilter==="tried"&&!on)return;if(cfilter==="left"&&on)return;
+    if(q&&!name.toLowerCase().includes(q))return;shown++;
+    const b=document.createElement("button");b.className="champ";b.setAttribute("aria-pressed",on);
+    b.innerHTML=`<span class="dot">${on?"\u2713":""}</span><span class="nm">${esc(name)}</span>${NEWC.has(name)?'<span class="new">NEW</span>':""}`;
+    b.onclick=()=>toggleChamp(name);grid.appendChild(b);
+  });
+  if(!shown){const d=document.createElement("div");d.className="none";d.textContent=q?`No champion matches “${$("search").value.trim()}”.`:"Nothing here.";grid.appendChild(d);}
+}
+async function toggleChamp(name){
+  if(tried.has(name))tried.delete(name);else tried.add(name);
+  updateChamps();renderGrid();updateMaster();renderItems();await sg("fbf:champs",[...tried]);
+  if(tried.size>=CT)toast("Every champion tried — legend \u2713");
+}
+function setFilter(f){cfilter=f;$("fAll").setAttribute("aria-pressed",f==="all");$("fTried").setAttribute("aria-pressed",f==="tried");$("fLeft").setAttribute("aria-pressed",f==="left");renderGrid();}
+function surprise(){
+  const left=CHAMPS.filter(c=>!tried.has(c)),b=$("banner");
+  if(!left.length){b.className="banner show";b.textContent="You've tried them all \u2713";return;}
+  const pick=left[Math.floor(Math.random()*left.length)];
+  b.className="banner show";b.innerHTML=`Next up: <b>${esc(pick)}</b> &middot; <span style="color:var(--muted)">${left.length} still to go</span>`;
+  $("search").value=pick;setFilter("all");renderGrid();
+}
+async function resetChamps(){if(!confirm("Clear every checkmark? This can't be undone."))return;tried=new Set();updateChamps();renderGrid();updateMaster();renderItems();$("banner").className="banner";await sg("fbf:champs",[]);toast("Cleared.");}
+
+/* ---------- views ---------- */
+function show(name){
+  ["home","acts","champs"].forEach(v=>$("view-"+v).classList.toggle("hidden",v!==name));
+  if(name==="home"){renderItems();updateMaster();}
+  window.scrollTo({top:0,behavior:"instant"in window?"instant":"auto"});
+}
+
+(async function init(){
+  manualDone=new Set(await gg("fbf:done",DEFAULT_DONE));
+  if(!window.storage){} else {
+    const r=await gg("fbf:done",null);if(r===null)await sg("fbf:done",DEFAULT_DONE);
+  }
+  acts=await gg("fbf:acts",[]);
+  hidden=new Set(await gg("fbf:acts-hidden",[]));
+  tried=new Set(await gg("fbf:champs",[]));
+
+  $("addBtn").onclick=addAct;
+  $("actText").addEventListener("keydown",e=>{if(e.key==="Enter")addAct();});
+  $("actReset").onclick=resetActs;$("restoreBtn").onclick=restoreSug;
+  $("actDate").value=new Date().toISOString().slice(0,10);
+  $("search").addEventListener("input",renderGrid);
+  $("fAll").onclick=()=>setFilter("all");$("fTried").onclick=()=>setFilter("tried");$("fLeft").onclick=()=>setFilter("left");
+  $("surprise").onclick=surprise;$("champReset").onclick=resetChamps;
+  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.go)));
+
+  renderItems();updateMaster();
+  renderLog();updateActs();renderChips();
+  updateChamps();renderGrid();
+  show("home");
+})();
+</script>
+</body>
+</html>
