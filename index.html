@@ -209,8 +209,8 @@
 const $=id=>document.getElementById(id);
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1700);}
 function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-const sg=async(k,v)=>{if(!window.storage)return;try{await window.storage.set(k,JSON.stringify(v));}catch(e){toast("Couldn't save");console.error(e);}};
-const gg=async(k,fb)=>{if(!window.storage)return fb;try{const r=await window.storage.get(k);return r&&r.value?JSON.parse(r.value):fb;}catch(e){return fb;}};
+const sg=async(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){toast("Couldn't save");console.error(e);}};
+const gg=async(k,fb)=>{try{const r=localStorage.getItem(k);return r!=null?JSON.parse(r):fb;}catch(e){return fb;}};
 
 /* ---------- master list ---------- */
 const DEFAULT_DONE=[1,2,6,7,14,15,19,22,23,26,30,31,37];
@@ -417,10 +417,9 @@ function show(name){
 }
 
 (async function init(){
-  manualDone=new Set(await gg("fbf:done",DEFAULT_DONE));
-  if(!window.storage){} else {
-    const r=await gg("fbf:done",null);if(r===null)await sg("fbf:done",DEFAULT_DONE);
-  }
+  const savedDone=await gg("fbf:done",null);
+  manualDone=new Set(savedDone===null?DEFAULT_DONE:savedDone);
+  if(savedDone===null)await sg("fbf:done",DEFAULT_DONE);
   acts=await gg("fbf:acts",[]);
   hidden=new Set(await gg("fbf:acts-hidden",[]));
   tried=new Set(await gg("fbf:champs",[]));
